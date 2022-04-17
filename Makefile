@@ -25,4 +25,3 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 clean:
 	rm -rf $(OBJECTS) $(DEPENDS) $(TARGET) $(OBJDIR)
 	rm -f *~
-

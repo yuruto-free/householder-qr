@@ -8,6 +8,7 @@
 #define RETURN_OK_QR (0)
 #define RETURN_NG_QR (1)
 #define MEPS_QR (1e-10)
+#define INDEX(row, col, dim) ((row) * (dim) + (col))
 
 struct qr_decomp_param_t {
     int32_t dim;
@@ -181,7 +182,7 @@ static int32_t create_eye_matrix(int32_t dim, double *matrix) {
             goto EXIT_EYE_MAT;
         }
         for (i = 0; i < dim; i++) {
-            matrix[i * dim + i] = 1.0;
+            matrix[INDEX(i, i, dim)] = 1.0;
         }
         ret = (int32_t)RETURN_OK_QR;
     }
@@ -197,7 +198,7 @@ static int32_t copy_matrix(int32_t dim, double *input, double *output) {
     if ((NULL != input) && (NULL != output)) {
         for (row = 0; row < dim; row++) {
             for (col = 0; col < dim; col++) {
-                idx = row * dim + col;
+                idx = INDEX(row, col, dim);
                 output[idx] = input[idx];
             }
         }
@@ -218,9 +219,9 @@ static int32_t mul_mm(int32_t dim, double *left_mat, double *right_mat, double *
                 sum = 0.0;
 
                 for (idx = 0; idx < dim; idx++) {
-                    sum += left_mat[row * dim + idx] * right_mat[idx * dim + col];
+                    sum += left_mat[INDEX(row, idx, dim)] * right_mat[INDEX(idx, col, dim)];
                 }
-                out_mat[row * dim + col] = sum;
+                out_mat[INDEX(row, col, dim)] = sum;
             }
         }
         ret = (int32_t)RETURN_OK_QR;
@@ -237,9 +238,9 @@ static int32_t transpose(int32_t dim, double *matrix) {
     if (NULL != matrix) {
         for (row = 0; row < dim - 1; row++) {
             for (col = row + 1; col < dim; col++) {
-                tmp = matrix[row * dim + col];
-                matrix[row * dim + col] = matrix[col * dim + row];
-                matrix[col * dim + row] = tmp;
+                tmp = matrix[INDEX(row, col, dim)];
+                matrix[INDEX(row, col, dim)] = matrix[INDEX(col, row, dim)];
+                matrix[INDEX(col, row, dim)] = tmp;
             }
         }
         ret = (int32_t)RETURN_OK_QR;
@@ -272,15 +273,15 @@ static int32_t qr_decomposition(struct qr_decomp_param_t *param, double *work) {
             /* ベクトルxの大きさの計算 */
             diag = 0.0;
             for (col = k; col < dim; col++) {
-                idx = k * dim + col;
+                idx = INDEX(k, col, dim);
                 diag += R[idx] * R[idx];
             }
             diag = sqrt(diag);
             /* uとnormの計算 */
-            u[k] = R[k * dim + k] - diag;
+            u[k] = R[INDEX(k, k, dim)] - diag;
             norm = u[k] * u[k];
             for (col = k + 1; col < dim; col++) {
-                u[col] = R[k * dim + col];
+                u[col] = R[INDEX(k, col, dim)];
                 norm += u[col] * u[col];
             }
             norm = sqrt(norm);
@@ -297,7 +298,7 @@ static int32_t qr_decomposition(struct qr_decomp_param_t *param, double *work) {
             }
             for (row = k; row < dim; row++) {
                 for (col = k; col < dim; col++) {
-                    H[row * dim + col] -= 2.0 * u[row] * u[col];
+                    H[INDEX(row, col, dim)] -= 2.0 * u[row] * u[col];
                 }
             }
             /* Rの更新 */
